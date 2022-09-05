@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lazy_loading/sql_helper.dart';
 
 class LazyLoading extends StatefulWidget {
   const LazyLoading({Key? key}) : super(key: key);
@@ -9,24 +10,28 @@ class LazyLoading extends StatefulWidget {
 
 class _LazyLoadingState extends State<LazyLoading> {
   List lazyList = [];
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
   int _currentMaxIndex = 10;
   @override
   void initState() {
     lazyList = List.generate(15, (i) => "Lazy Data: ${i + 1}");
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-        _getMoreData();
-      }
-    });
+
+    _scrollController.addListener(
+      () {
+        if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+          _getMoreData();
+        }
+      },
+    );
   }
 
-  _getMoreData() {
+  _getMoreData() async {
     for (int i = _currentMaxIndex; i < _currentMaxIndex + 10; i++) {
       lazyList.add("Items: ${i + 1}");
     }
     _currentMaxIndex = _currentMaxIndex + 10;
     setState(() {});
+    print(_currentMaxIndex.toString());
   }
 
   @override

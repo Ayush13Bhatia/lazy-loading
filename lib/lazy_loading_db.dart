@@ -12,13 +12,16 @@ class LazyLoadingDB extends StatefulWidget {
 }
 
 class _LazyLoadingDBState extends State<LazyLoadingDB> {
-  int count = 10000;
+  int count = 1000;
   List<PersonModel> personList = [];
+  late int _currentMaxIndex = 10;
+
+  final ScrollController _scrollController = ScrollController();
   var fido = PersonModel(
     name: 'Fido',
     age: 35,
   );
-  Future<void> counter() async {
+  Future<void> insertDataInDB() async {
     Database db = await SqlHelper.initializeDB();
     var batch = db.batch();
 
@@ -28,23 +31,28 @@ class _LazyLoadingDBState extends State<LazyLoadingDB> {
     await batch.commit();
   }
 
-  void addData() async {
-    final data = await SqlHelper.readList();
-    setState(() {
-      personList = data;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    addData(); // Loading the diary when the app starts
+    addData();
+    _scrollController.addListener(
+      () {
+        if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+          addData();
+        }
+      },
+    );
+
+    print("Person List ${personList}");
   }
 
-  void loadMore() async {
+  void addData() async {
+    var data = await SqlHelper.readList(_currentMaxIndex++);
+
     setState(() {
-      const CircularProgressIndicator();
+      personList = data;
     });
+    print(personList.length);
   }
 
   @override
@@ -53,24 +61,22 @@ class _LazyLoadingDBState extends State<LazyLoadingDB> {
       appBar: AppBar(
         title: const Text('Hey, Lazy Loader!'),
       ),
-      body: LazyLoadScrollView(
-        onEndOfPage: () => loadMore(),
-        child: ListView.builder(
-          itemCount: personList.length,
-          itemBuilder: (_, i) {
-            return Card(
-              child: ListTile(
-                trailing: Text('${personList[i].id}'),
-                title: Text('${personList[i].name}'),
-                subtitle: Text('${personList[i].age}'),
-              ),
-            );
-          },
-        ),
+      body: ListView.builder(
+        controller: _scrollController,
+        itemCount: personList.length,
+        itemBuilder: (_, i) {
+          return Card(
+            child: ListTile(
+              trailing: Text('${personList[i].id}'),
+              title: Text('${personList[i].name}'),
+              subtitle: Text('${personList[i].age}'),
+            ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          counter();
+          insertDataInDB();
           print('Pressed');
         },
         child: const Text('insert data'),
