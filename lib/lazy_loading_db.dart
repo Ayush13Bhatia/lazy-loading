@@ -15,6 +15,7 @@ class _LazyLoadingDBState extends State<LazyLoadingDB> {
   int count = 1000;
   List<PersonModel> personList = [];
   late int _currentMaxIndex = 10;
+  String message = "";
 
   final ScrollController _scrollController = ScrollController();
   var fido = PersonModel(
@@ -31,27 +32,41 @@ class _LazyLoadingDBState extends State<LazyLoadingDB> {
     await batch.commit();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    addData();
+  _scrollLister() {
     _scrollController.addListener(
       () {
-        if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-          addData();
+        if (_scrollController.position.maxScrollExtent >= _scrollController.offset && !_scrollController.position.outOfRange) {
+          addData(_currentMaxIndex++);
+          print("Max");
+
+          // setState(() {});
+        }
+        if (_scrollController.position.minScrollExtent >= _scrollController.offset && !_scrollController.position.outOfRange) {
+          addData(_currentMaxIndex--);
+          print('Min');
+          // setState(() {});
         }
       },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    addData(0);
+    _scrollLister();
 
     print("Person List ${personList}");
   }
 
-  void addData() async {
-    var data = await SqlHelper.readList(_currentMaxIndex++);
+  void addData(int offsetValue) async {
+    var data = await SqlHelper.readList(offsetValue);
 
     setState(() {
       personList = data;
     });
+
     print(personList.length);
   }
 

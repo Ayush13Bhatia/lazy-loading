@@ -27,10 +27,10 @@ class SqlHelper {
     );
   }
 
-  static Future<List<PersonModel>> readList(int offset) async {
+  static Future<List<PersonModel>> readList(int limit) async {
     Database db = await initializeDB();
     var maps = [];
-    maps = await db.query('person', limit: (offset * 10));
+    maps = await db.query('person', offset: (limit * 1), limit: 10);
     print(maps);
     return maps.map((e) => PersonModel.fromJson(e)).toList();
   }
